@@ -54,6 +54,7 @@ public class BatchImageCropper {
         }
 
         int totalProcessed = 0;
+        int globalIndex = 1;
         for (File file : files) {
             System.out.println("📸 Processing: " + file.getName());
             BufferedImage original = ImageIO.read(file);
@@ -62,31 +63,29 @@ public class BatchImageCropper {
                 continue;
             }
 
-            // Create subfolder for each image’s crops
-            File imageOutDir = new File(outDir, file.getName().replaceFirst("\\.[^.]+$", ""));
-            imageOutDir.mkdirs();
-
-            cropImage(original, imageOutDir, cropSize );
+            cropImage(original, outDir, cropSize, globalIndex);
+            globalIndex = cropImage(original, outDir, cropSize, globalIndex);
             totalProcessed++;
         }
 
         System.out.println("✅ Done! Processed " + totalProcessed + " images.");
     }
 
-    public static void cropImage(BufferedImage original, File outputFolder, int cropSize) throws IOException {
+    public static int cropImage(BufferedImage original, File outputFolder, int cropSize, int startIndex) throws IOException {
         int width = original.getWidth();
         int height = original.getHeight();
-        int count = 0;
+        int index = startIndex;
 
         for (int y = 0; y + cropSize <= height; y += cropSize) {
             for (int x = 0; x + cropSize <= width; x += cropSize) {
                 BufferedImage subImage = original.getSubimage(x, y, cropSize, cropSize);
-                File output = new File(outputFolder, "crop_" + count + ".png");
+                String fileName = String.format("%03d.png", index);
+                File output = new File(outputFolder, fileName);
                 ImageIO.write(subImage, "png", output);
-                count++;
+                index++;
             }
         }
 
-        System.out.println("🧩 Saved " + count + " crops to " + outputFolder.getName());
+        return index;
     }
 }
